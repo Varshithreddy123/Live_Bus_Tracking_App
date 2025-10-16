@@ -1,0 +1,224 @@
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Keyboard,
+} from "react-native";
+import CountryPicker, {
+  Country,
+  CountryCode,
+  Flag,
+} from "react-native-country-picker-modal";
+import { useTheme } from "@react-navigation/native";
+import { windowHeight, windowWidth } from "@/themes/app.constant";
+import { commonStyles } from "@/styles/common.style";
+import { external } from "@/styles/external.style";
+
+interface PhoneNumberInputProps {
+  width?: number;
+  onChange?: (fullNumber: string) => void;
+  onSendOtp?: (phone: string) => Promise<void> | void;
+  phone_number: string;
+  setPhoneNumber: React.Dispatch<React.SetStateAction<string>>;
+  countryCode: CountryCode;
+  setCountryCode: React.Dispatch<React.SetStateAction<CountryCode>>;
+  callingCode: string;
+  setCallingCode: React.Dispatch<React.SetStateAction<string>>;
+  countryName: string;
+  setCountryName: React.Dispatch<React.SetStateAction<string>>;
+  isPhoneNumberValid: boolean;
+  setIsPhoneNumberValid: React.Dispatch<React.SetStateAction<boolean>>;
+  otp: string;
+  setOtp: React.Dispatch<React.SetStateAction<string>>;
+}
+
+const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
+  width,
+  phone_number,
+  setPhoneNumber,
+  countryCode,
+  setCountryCode,
+  callingCode,
+  setCallingCode,
+  countryName,
+  setCountryName,
+  isPhoneNumberValid,
+  setIsPhoneNumberValid,
+  otp,
+  setOtp,
+  onChange,
+  onSendOtp,
+}) => {
+  const { colors } = useTheme();
+  const [internalPhoneNumber, setInternalPhoneNumber] = useState(phone_number);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  // Validate phone number on change
+  useEffect(() => {
+    const isValid = /^\d{10}$/.test(internalPhoneNumber);
+    setIsPhoneNumberValid(isValid);
+    setError(isValid ? "" : "Phone number must be exactly 10 digits");
+    if (onChange) onChange(`+${callingCode}${internalPhoneNumber}`);
+    setPhoneNumber(internalPhoneNumber);
+  }, [internalPhoneNumber, callingCode]);
+
+  const onSelect = (country: Country) => {
+    setCountryCode(country.cca2);
+    const calling = country.callingCode[0] || "";
+    setCallingCode(calling);
+    setCountryName(country.name);
+    // Update full number on country change
+    if (onChange) onChange(`+${calling}${internalPhoneNumber}`);
+  };
+
+  const handlePhoneChange = (text: string) => {
+    const numeric = text.replace(/[^0-9]/g, "");
+    setInternalPhoneNumber(numeric);
+  };
+
+  const handleSendOtp = async () => {
+    if (!isPhoneNumberValid || !onSendOtp) return;
+    Keyboard.dismiss();
+    setLoading(true);
+    try {
+      await onSendOtp(`+${callingCode}${internalPhoneNumber}`);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to send OTP, please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={{ width: width || "100%" }}>
+      <Text
+        style={[
+          commonStyles.mediumTextBlack,
+          { color: colors.text, marginBottom: windowHeight(6) },
+        ]}
+      >
+        Phone Number
+      </Text>
+
+      <View
+        style={[
+          external.fd_row,
+          external.ai_center,
+          styles.inputRow,
+          { borderColor: error ? "red" : colors.border },
+        ]}
+      >
+        {/* Country selector */}
+        <TouchableOpacity
+          onPress={() => setVisible(true)}
+          style={[styles.countryPickerContainer, { borderColor: colors.border }]}
+          activeOpacity={0.7}
+        >
+          <Flag countryCode={countryCode} flagSize={20} style={{ marginRight: 7 }} />
+          <Text style={[styles.countryPickerText, { color: colors.text, minWidth: 40 }]}>
+            +{callingCode}
+          </Text>
+        </TouchableOpacity>
+
+        <CountryPicker
+          countryCode={countryCode}
+          withModal
+          withFlag
+          withCallingCode
+          visible={visible}
+          onSelect={onSelect}
+          onClose={() => setVisible(false)}
+          withFilter
+          withFlagButton={false}
+        />
+
+        {/* Phone input */}
+        <TextInput
+          style={[styles.phoneInput, commonStyles.regularText, { color: colors.text }]}
+          placeholder="Enter phone number"
+          placeholderTextColor={colors.text + "80"}
+          keyboardType="phone-pad"
+          maxLength={10}
+          value={internalPhoneNumber}
+          onChangeText={handlePhoneChange}
+        />
+
+        {/* Send OTP button */}
+        <TouchableOpacity
+          style={[
+            styles.otpButton,
+            {
+              backgroundColor: isPhoneNumberValid ? colors.primary : colors.border,
+              opacity: loading ? 0.7 : 1,
+            },
+          ]}
+          disabled={!isPhoneNumberValid || loading}
+          onPress={handleSendOtp}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.otpButtonText}>Send OTP</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    </View>
+  );
+};
+
+export default PhoneNumberInput;
+
+const styles = StyleSheet.create({
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: windowHeight(10),
+    paddingHorizontal: windowWidth(10),
+    backgroundColor: "#fff",
+  },
+  countryPickerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: windowWidth(80),
+    height: windowHeight(48),
+    borderRightWidth: 1,
+    paddingRight: windowWidth(8),
+  },
+  countryPickerText: {
+    fontSize: windowHeight(15),
+    marginLeft: windowWidth(5),
+  },
+  phoneInput: {
+    flex: 1,
+    height: windowHeight(48),
+    paddingHorizontal: windowWidth(10),
+  },
+  otpButton: {
+    height: windowHeight(40),
+    borderRadius: windowHeight(8),
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: windowWidth(15),
+    marginLeft: windowWidth(8),
+  },
+  otpButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  errorText: {
+    color: "red",
+    fontSize: windowHeight(13),
+    marginTop: windowHeight(5),
+  },
+});
