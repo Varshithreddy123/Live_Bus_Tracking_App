@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "RideWave",
-    "slug": "RideWave",
+    "name": "FindABus",
+    "slug": "findabus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "RideWave",
+    "scheme": "findabus",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.becodemy.RideWave",
+      "package": "com.project.livebustracking",
       "config": {
         "googleMaps": {
           "apiKey": ""

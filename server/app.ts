@@ -3,6 +3,7 @@ dotenv.config();
 import express, {NextFunction, Request, Response} from "express";
 import cookieParser from "cookie-parser";
 import userRouter from "./routes/user.route";
+import busRouter from "./routes/bus.route";
 
 const app = express();
 app.use(express.json());
@@ -14,6 +15,7 @@ app.get("/", (req, res) => {
 
 // ONLY use the router - no duplicate routes
 app.use("/api/v1", userRouter);
+app.use("/api/v1/bus", busRouter);
 
 //testing api
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {

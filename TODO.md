@@ -1,15 +1,14 @@
-# TODO List for Fixing app.ts, server.ts, user.route.ts
+# Fix Registration Screen Issues
 
-- [x] Rename server/controlers directory to server/controllers
-- [x] Add export { app }; at the end of server/app.ts
-- [x] Update import path in server/routes/user.route.ts from "../controlers/user.controller" to "../controllers/user.controller"
-- [x] Test the server by running it to ensure no errors
+## Problem
+- After successful registration, user is pushed to home tab but not remembered on app restart
+- Existing users are not persisted in AsyncStorage after OTP verification
 
-# TODO List for Fixing OTP Network Error
+## Solution Steps
+1. Update user/screens/registration/registration.screen.tsx to save user data to AsyncStorage after successful registration
+2. Update user/screens/verification/otp-verification.screen.tsx to save existing user data to AsyncStorage after OTP verification
+3. Test the complete flow to ensure users are remembered
 
-- [ ] Fix phone number state variable in user/screens/verification/otp-verification.screen.tsx (rename to avoid conflict with component)
-- [ ] Pass phone number from login screen to OTP verification screen via navigation params
-- [ ] Implement verify-otp endpoint in server/controllers/user.controller.tsx using Twilio
-- [ ] Implement resend-otp endpoint in server/controllers/user.controller.tsx using Twilio
-- [ ] Ensure server is running and EXPO_PUBLIC_SERVER_URI is set correctly in user app
-- [ ] Test OTP sending and verification flow
+## Files to Edit
+- user/screens/registration/registration.screen.tsx
+- user/screens/verification/otp-verification.screen.tsx

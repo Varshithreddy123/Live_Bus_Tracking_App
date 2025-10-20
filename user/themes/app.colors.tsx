@@ -2,6 +2,7 @@ export type Color = {
     lightGray: string;
     regularText: string;
     primaryText: string;
+    secondaryText: string;
     linearBorder: string;
     subtitle: string;
     lightGreen: string;
@@ -18,6 +19,7 @@ export type Color = {
     sliderColor: string;
     notificationColor: string;
     border: string;
+    borderColor: string;
     readyText: string;
     categoryTitle: string;
     activeColor: string;
@@ -28,12 +30,17 @@ export type Color = {
     iconRed: string;
     darkBorder: string;
     selectPrimary: string;
+    primaryLight: string;
+    secondaryLight: string;
+    errorText: string;
+    primary: string;
   };
   
   const color: Color = {
     lightGray: '#F5F5F5',
     regularText: '#8F8F8F',
     primaryText: '#1F1F1F',
+    secondaryText: '#8F8F8F',
     linearBorder: 'rgba(149, 143, 159, 0.00)',
     subtitle: '#9BA6B8',
     lightGreen: '#E8F4F1',
@@ -51,6 +58,7 @@ export type Color = {
     readyText: '#065C46',
     notificationColor: '#F2F2F2',
     border: '#E9E9E9',
+    borderColor: '#E9E9E9',
     categoryTitle: '#8CCBBA',
     activeColor: '#3F8FDA',
     completeColor: '#FFB400',
@@ -60,7 +68,12 @@ export type Color = {
     iconRed: '#FEEBEB',
     darkBorder: '#474747',
     selectPrimary: '#E8F4F1',
+    primaryLight: '#E8F4F1',
+    secondaryLight: '#F5F5F5',
+    errorText: '#F33737',
+    primary: '#665CFF',
   };
+  
   
   export default color;
   

@@ -86,4 +86,11 @@ export * from '../../assets/icons/close';
 export * from '../../assets/icons/forword';
 export * from '../../assets/icons/coin';
 export * from '../../assets/icons/fillClock';
-export * from '../../assets/icons/coins'
+export * from '../../assets/icons/coins';
+export * from '../../assets/icons/miniTaxi';
+export * from '../../assets/icons/correct';
+export * from '../../assets/icons/wallet';
+export * from '../../assets/icons/swap';
+export * from '../../assets/icons/bike';
+export * from '../../assets/icons/walking';
+export * from '../../assets/icons/cash';

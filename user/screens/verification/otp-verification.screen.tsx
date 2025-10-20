@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AuthContainer from '@/utils/container/auth-container';
 import SignInText from '@/components/login/signin.text';
 import { windowHeight } from '@/themes/app.constant';
@@ -12,12 +12,26 @@ import color from '@/themes/app.colors';
 import { commonStyles } from '@/styles/common.style';
 import { useToast } from 'react-native-toast-notifications';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Create a custom axios instance with proper configuration
+const api = axios.create({
+  timeout: 10000, // 10 seconds timeout
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
+});
 
 export default function OtpverificationScreen() {
-  const { phoneNumber } = useLocalSearchParams(); // ✅ receive from LoginScreen
+  const { phoneNumber } = useLocalSearchParams<{ phoneNumber: string }>();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const toast = useToast();
+  
+  useEffect(() => {
+    console.log("OTP Screen received phone number:", phoneNumber);
+  }, [phoneNumber]);
 
   // --- 1️⃣ Send OTP Logic (optional resend) ---
   const handleSendOTP = async () => {
@@ -28,13 +42,27 @@ export default function OtpverificationScreen() {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/send-otp`, {
+      console.log("Sending OTP to:", phoneNumber);
+      console.log("API URL:", `${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/send-otp`);
+      
+      const response = await api.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/send-otp`, {
         phone_number: phoneNumber,
       });
       console.log("OTP Sent:", response.data);
       toast.show('OTP sent successfully', { placement: "bottom" });
     } catch (error: any) {
-      console.error("OTP Send Error:", error.response?.data || error.message);
+      console.error("OTP Send Error:", error);
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error("No response received:", error.request);
+      } else {
+        // Something happened in setting up the request
+        console.error("Error message:", error.message);
+      }
       toast.show('Failed to send OTP. Please try again.', { placement: "bottom" });
     } finally {
       setLoading(false);
@@ -48,18 +76,69 @@ export default function OtpverificationScreen() {
       return;
     }
 
+    if (!phoneNumber) {
+      console.error("Phone number is missing for OTP verification");
+      toast.show('Phone number is missing. Please go back and try again.', { placement: "bottom" });
+      return;
+    }
+
     try {
       setLoading(true);
-      const response = await axios.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/verify-otp`, {
+      console.log("Verifying OTP:", otp, "for phone:", phoneNumber);
+      console.log("API URL:", `${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/verify-otp`);
+      
+      // Log the request payload for debugging
+      const payload = {
         otp: otp,
         phone_number: phoneNumber,
-      });
-      console.log("OTP Verified:", response.data);
-      toast.show('OTP verified successfully', { placement: "bottom" });
-      router.push("/home");
+      };
+      console.log("Verification payload:", payload);
+      
+      const response = await api.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/verify-otp`, payload);
+      
+      console.log("OTP Verification Response:", response.data);
+      
+     // Fixed OTP verification logic
+if (response.data && response.data.user) {
+  // Save user data to AsyncStorage for all users
+  try {
+    await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
+    console.log("User data saved to AsyncStorage:", response.data.user);
+  } catch (storageError) {
+    console.error("Failed to save user data to AsyncStorage:", storageError);
+  }
+
+  // Check if user is new or existing
+  if (response.data.isNewUser) {
+    // New user needs to complete registration
+    router.push({
+      pathname: "/(routes)/registration",
+      params: { userId: response.data.user.id }
+    });
+  } else {
+    // Existing user, go to home
+    toast.show('Account verified successfully', { placement: "bottom" });
+    router.replace({ pathname: "/(tabs)/home" });
+  }
+} else {
+  // Handle case where verification failed
+  console.error("Verification failed:", response.data);
+  toast.show(response.data.message || 'Invalid OTP. Please try again.', { placement: "bottom" });
+}
+      
     } catch (error: any) {
-      console.error("Verify Error:", error.response?.data || error.message);
-      toast.show('Invalid OTP. Please try again.', { placement: "bottom" });
+      console.error("Verify Error:", error);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        toast.show(error.response.data?.message || 'Invalid OTP. Please try again.', { placement: "bottom" });
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+        toast.show('Network error. Please check your connection and try again.', { placement: "bottom" });
+      } else {
+        console.error("Error message:", error.message);
+        toast.show('Error verifying OTP. Please try again.', { placement: "bottom" });
+      }
     } finally {
       setLoading(false);
     }
@@ -67,15 +146,29 @@ export default function OtpverificationScreen() {
 
   // --- 3️⃣ Resend OTP Logic ---
   const handleResendOTP = async () => {
+    if (!phoneNumber) {
+      toast.show('Phone number is missing', { placement: "bottom" });
+      return;
+    }
+    
     try {
       setLoading(true);
-      const response = await axios.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/resend-otp`, {
+      console.log("Resending OTP to:", phoneNumber);
+      const response = await api.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/resend-otp`, {
         phone_number: phoneNumber,
       });
       console.log("OTP Resent:", response.data);
       toast.show('OTP resent successfully', { placement: "bottom" });
     } catch (error: any) {
-      console.error("Resend Error:", error.response?.data || error.message);
+      console.error("Resend Error:", error);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+      } else {
+        console.error("Error message:", error.message);
+      }
       toast.show('Failed to resend OTP. Please try again.', { placement: "bottom" });
     } finally {
       setLoading(false);
@@ -95,7 +188,10 @@ export default function OtpverificationScreen() {
 
           {/* --- OTP Input --- */}
           <OTPTextInput
-            handleCellTextChange={(code) => setOtp(code)}
+            handleTextChange={(code) => {
+              console.log("OTP entered:", code);
+              setOtp(code);
+            }}
             inputCount={6}
             textInputStyle={styles.OTPTextInput}
             tintColor={color.subtitle}

@@ -6,6 +6,6 @@ import { useLocalSearchParams } from 'expo-router'
 export default function index() {
   const { phoneNumber } = useLocalSearchParams<{ phoneNumber: string }>()
   return (
-    <OtpverificationScreen />
+    <OtpverificationScreen phoneNumber={phoneNumber} />
   )
 }
