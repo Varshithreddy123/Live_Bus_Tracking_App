@@ -1,0 +1,21 @@
+{
+  "name": "bus-tracking-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "user",
+    "driver",
+    "server"
+  ],
+  "scripts": {
+    "build:user": "cd user && npx expo prebuild --clean",
+    "build:driver": "cd driver && npx expo prebuild --clean",
+    "build:all": "npm run build:user && npm run build:driver",
+    "start:user": "cd user && npx expo start",
+    "start:driver": "cd driver && npx expo start",
+    "start:server": "cd server && npm start"
+  },
+  "devDependencies": {
+    "expo": "~50.0.0"
+  }
+}
