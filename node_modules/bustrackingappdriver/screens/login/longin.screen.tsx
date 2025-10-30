@@ -61,7 +61,7 @@ export default function LoginScreen() {
                       return;
                     }
                     router.push({
-                      pathname: "/verification/phone-number",
+                      pathname: "/(routes)/otp-verification",
                       params: { phoneNumber: `+${callingCode}${phoneNumber}` }
                     });
                   }}

@@ -314,41 +314,61 @@ export default function BusRegistrationScreen() {
         registeredAt: new Date().toISOString(),
       };
 
-      // TODO: Replace with actual API call
-      console.log("Bus Registration Data (Sanitized):", sanitizedData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Complete driver registration with all data
+      const registrationData = {
+        driverId: `temp-${Date.now()}`, // Temporary ID until backend creates it
+        name: params.name,
+        email: params.email || null,
+        phoneNumber: params.phone,
+        drinving_license: params.license,
+        country: null,
+        vehicleNumber: sanitizedData.busNumber,
+        vehicleType: "Petrol", // Default, can be updated later
+        vehicleColor: null,
+        vehicleImage: null,
+        password: params.password,
+        busNumber: sanitizedData.busNumber,
+        departureTime: sanitizedData.departureTime,
+        arrivalTime: sanitizedData.arrivalTime,
+        operatedRoutes: sanitizedData.operatedRoutes,
+        registerId: sanitizedData.registerId
+      };
 
-      // Success - navigate to verification with all data
-      Alert.alert(
-        "Success",
-        "Bus details registered successfully!",
-        [
-          {
-            text: "Continue to Verification",
-            onPress: () => router.push({
-              pathname: "/(routes)/verification-phonenumber",
-              params: {
-                name: params.name,
-                phone: params.phone,
-                license: params.license,
-                password: params.password,
-                busNumber: sanitizedData.busNumber,
-                departureTime: sanitizedData.departureTime,
-                arrivalTime: sanitizedData.arrivalTime,
-                operatedRoutes: sanitizedData.operatedRoutes,
-                registerId: sanitizedData.registerId
-              }
-            }),
-          },
-        ]
-      );
+      console.log("Complete Registration Data:", registrationData);
+
+      // Call backend API to register driver and bus
+      const response = await fetch(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/driver/register-bus`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        Alert.alert(
+          "Success",
+          "Registration completed successfully! You can now start accepting rides.",
+          [
+            {
+              text: "Go to Dashboard",
+              onPress: () => {
+                // Navigate to driver dashboard or home
+                router.push("/(routes)/profile"); // Or wherever the main driver screen is
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Registration Failed", result.message || "Please try again.");
+      }
     } catch (error) {
       console.error("Registration error:", error);
       Alert.alert(
         "Registration Failed",
-        "Unable to register bus details. Please try again.",
+        "Unable to complete registration. Please check your connection and try again.",
         [{ text: "OK" }]
       );
     } finally {
@@ -439,14 +459,14 @@ export default function BusRegistrationScreen() {
               marginBottom: 15,
             }}
           >
-            Step 2 of 3: Enter your bus details
+            Step 2 of 2: Bus Details
           </Text>
 
           {/* Progress Bar */}
           <ProgressBar
             currentStep={2}
-            totalSteps={3}
-            titles={["Personal Info", "Bus Details", "Verification"]}
+            totalSteps={2}
+            titles={["Personal Info", "Bus Details"]}
           />
 
           {/* Input Fields */}

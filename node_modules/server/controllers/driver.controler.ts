@@ -332,25 +332,29 @@ export const completeDriverProfile = async (req: Request, res: Response, next: N
   }
 };
 
-// 🚗 Register Vehicle Details
+// 🚗 Register Driver and Vehicle Details (Combined Registration)
 export const registerVehicleDetails = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { 
-      driverId, 
-      vehicleNumber, 
+    const {
+      driverId,
+      name,
+      email,
+      phoneNumber,
+      drinving_license,
+      country,
+      password, // Ignored as per schema
+      vehicleNumber,
       vehicleType,
       vehicleColor,
-      vehicleImage
+      vehicleImage,
+      busNumber, // Additional bus details
+      departureTime,
+      arrivalTime,
+      operatedRoutes,
+      registerId
     } = req.body;
 
-    // Validate required fields
-    if (!driverId) {
-      return res.status(400).json({
-        success: false,
-        message: "Driver ID is required"
-      });
-    }
-
+    // Validate required fields for vehicle
     if (!vehicleNumber || !validateVehicleNumber(vehicleNumber)) {
       return res.status(400).json({
         success: false,
@@ -362,26 +366,6 @@ export const registerVehicleDetails = async (req: Request, res: Response, next: 
       return res.status(400).json({
         success: false,
         message: "Valid vehicle type is required (Electric, Petrol, Diesel, or Hybrid)"
-      });
-    }
-
-    // Check if driver exists
-    const driver = await prisma.driver.findUnique({
-      where: { id: driverId }
-    });
-
-    if (!driver) {
-      return res.status(404).json({
-        success: false,
-        message: "Driver not found"
-      });
-    }
-
-    // Check if driver already has a vehicle registered
-    if (driver.vehicleNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Driver already has a vehicle registered. Use update endpoint instead."
       });
     }
 
@@ -397,32 +381,148 @@ export const registerVehicleDetails = async (req: Request, res: Response, next: 
       });
     }
 
-    // Update driver with vehicle details
-    const updatedDriver = await prisma.driver.update({
-      where: { id: driverId },
-      data: { 
-        vehicleNumber: vehicleNumber.toUpperCase().trim(),
-        vehicleType: vehicleType,
-        vehicleColor: vehicleColor ? vehicleColor.trim() : null,
-        vehicleImage: vehicleImage ? vehicleImage : null,
-        status: "active", // Activate driver once vehicle is registered
+    let driver;
+
+    // Check if driver exists
+    if (driverId && !driverId.startsWith('temp-')) {
+      driver = await prisma.driver.findUnique({
+        where: { id: driverId }
+      });
+
+      if (!driver) {
+        return res.status(404).json({
+          success: false,
+          message: "Driver not found"
+        });
       }
-    });
+
+      // Check if driver already has a vehicle registered
+      if (driver.vehicleNumber) {
+        return res.status(400).json({
+          success: false,
+          message: "Driver already has a vehicle registered. Use update endpoint instead."
+        });
+      }
+
+      // Update existing driver with vehicle details
+      driver = await prisma.driver.update({
+        where: { id: driverId },
+        data: {
+          vehicleNumber: vehicleNumber.toUpperCase().trim(),
+          vehicleType: vehicleType,
+          vehicleColor: vehicleColor ? vehicleColor.trim() : null,
+          vehicleImage: vehicleImage ? vehicleImage : null,
+          status: "active", // Activate driver once vehicle is registered
+        }
+      });
+    } else {
+      // Driver doesn't exist, create new driver with all details
+      if (!name || name.trim().length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid name is required (minimum 2 characters)"
+        });
+      }
+
+      if (!phoneNumber || !validatePhoneNumber(phoneNumber)) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid phone number is required"
+        });
+      }
+
+      if (!drinving_license || drinving_license.trim().length < 5) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid driving license number is required (minimum 5 characters)"
+        });
+      }
+
+      if (email && !validateEmail(email)) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid email is required"
+        });
+      }
+
+      // Check for duplicates
+      const existingPhone = await prisma.driver.findUnique({
+        where: { phoneNumber: phoneNumber.trim() }
+      });
+
+      if (existingPhone) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number already registered"
+        });
+      }
+
+      const existingLicense = await prisma.driver.findUnique({
+        where: { drinving_license: drinving_license.toUpperCase().trim() }
+      });
+
+      if (existingLicense) {
+        return res.status(400).json({
+          success: false,
+          message: "Driving license number already registered"
+        });
+      }
+
+      if (email) {
+        const existingEmail = await prisma.driver.findUnique({
+          where: { email: email.toLowerCase().trim() }
+        });
+
+        if (existingEmail) {
+          return res.status(400).json({
+            success: false,
+            message: "Email already registered"
+          });
+        }
+      }
+
+      // Create new driver with all details
+      driver = await prisma.driver.create({
+        data: {
+          name: name.trim(),
+          email: email ? email.toLowerCase().trim() : null,
+          phoneNumber: phoneNumber.trim(),
+          drinving_license: drinving_license.toUpperCase().trim(),
+          country: country ? country.trim() : null,
+          vehicleNumber: vehicleNumber.toUpperCase().trim(),
+          vehicleType: vehicleType,
+          vehicleColor: vehicleColor ? vehicleColor.trim() : null,
+          vehicleImage: vehicleImage ? vehicleImage : null,
+          rating: 0,
+          totalEarning: 0,
+          totalRides: 0,
+          pendingRides: 0,
+          cancleRides: 0,
+          status: "active", // Activate driver once registered with vehicle
+        }
+      });
+    }
 
     res.status(200).json({
       success: true,
-      message: "Vehicle details registered successfully",
+      message: driverId && !driverId.startsWith('temp-')
+        ? "Vehicle details registered successfully"
+        : "Driver and vehicle registered successfully",
       driver: {
-        id: updatedDriver.id,
-        name: updatedDriver.name,
-        vehicleNumber: updatedDriver.vehicleNumber,
-        vehicleType: updatedDriver.vehicleType,
-        vehicleColor: updatedDriver.vehicleColor,
-        status: updatedDriver.status,
+        id: driver.id,
+        name: driver.name,
+        email: driver.email,
+        phoneNumber: driver.phoneNumber,
+        drinving_license: driver.drinving_license,
+        country: driver.country,
+        vehicleNumber: driver.vehicleNumber,
+        vehicleType: driver.vehicleType,
+        vehicleColor: driver.vehicleColor,
+        status: driver.status,
       }
     });
   } catch (error: any) {
-    console.error("Register Vehicle Details Error:", error);
+    console.error("Register Driver and Vehicle Details Error:", error);
     next(error);
   }
 };
@@ -612,6 +712,61 @@ export const updateDriverStatus = async (req: Request, res: Response, next: Next
   }
 };
 
+// 🔍 Check Duplicate Fields
+export const checkDuplicateFields = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { phoneNumber, drinving_license, email } = req.body;
+
+    const errors: string[] = [];
+
+    // Check phone number
+    if (phoneNumber) {
+      const existingPhone = await prisma.driver.findUnique({
+        where: { phoneNumber: phoneNumber.trim() }
+      });
+      if (existingPhone) {
+        errors.push("phone");
+      }
+    }
+
+    // Check driving license
+    if (drinving_license) {
+      const existingLicense = await prisma.driver.findUnique({
+        where: { drinving_license: drinving_license.toUpperCase().trim() }
+      });
+      if (existingLicense) {
+        errors.push("license");
+      }
+    }
+
+    // Check email
+    if (email) {
+      const existingEmail = await prisma.driver.findUnique({
+        where: { email: email.toLowerCase().trim() }
+      });
+      if (existingEmail) {
+        errors.push("email");
+      }
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Duplicate ${errors.join(", ")} found`,
+        duplicates: errors
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "No duplicates found"
+    });
+  } catch (error: any) {
+    console.error("Check Duplicate Fields Error:", error);
+    next(error);
+  }
+};
+
 // 📊 Get Driver Statistics
 export const getDriverStatistics = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -643,11 +798,11 @@ export const getDriverStatistics = async (req: Request, res: Response, next: Nex
         totalRides: driver.totalRides,
         pendingRides: driver.pendingRides,
         cancelledRides: driver.cancleRides,
-        completionRate: driver.totalRides > 0 
-          ? ((driver.totalRides - driver.cancleRides) / driver.totalRides * 100).toFixed(2) 
+        completionRate: driver.totalRides > 0
+          ? ((driver.totalRides - driver.cancleRides) / driver.totalRides * 100).toFixed(2)
           : 0,
-        averageEarningPerRide: driver.totalRides > 0 
-          ? (driver.totalEarning / driver.totalRides).toFixed(2) 
+        averageEarningPerRide: driver.totalRides > 0
+          ? (driver.totalEarning / driver.totalRides).toFixed(2)
           : 0,
       }
     });

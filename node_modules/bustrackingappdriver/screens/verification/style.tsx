@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
-import color from '../../themes/app.colors';
-import { windowHeight, windowWidth, SCREEN_WIDTH } from '../../themes/app.constant';
+import color from '@/themes/app.colors';
+import { windowHeight, windowWidth, SCREEN_WIDTH } from '@/themes/app.constant';
 
 export const styles = StyleSheet.create({
   // --- Main Container ---

@@ -6,7 +6,8 @@ import {
   completeDriverProfile,
   registerVehicleDetails,
   getDriverProfile,
-  updateDriverProfile
+  updateDriverProfile,
+  checkDuplicateFields
 } from "../controllers/driver.controler";
 
 const driverRouter = express.Router();
@@ -15,6 +16,9 @@ const driverRouter = express.Router();
 driverRouter.post("/send-otp-driver", registerDriver);
 driverRouter.post("/verify-otp-driver", verifyDriverOTP);
 driverRouter.post("/resend-otp-driver", resendDriverOTP);
+
+// Driver validation routes
+driverRouter.post("/check-duplicate", checkDuplicateFields);
 
 // Driver profile routes
 driverRouter.post("/complete-profile", completeDriverProfile);

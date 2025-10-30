@@ -1,0 +1,18 @@
+{
+  "driverId": "temp-1234567890",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phoneNumber": "9876543210",
+  "drinving_license": "KL1120170001234",
+  "country": "India",
+  "vehicleNumber": "KL-07-AB-1234",
+  "vehicleType": "Petrol",
+  "vehicleColor": "White",
+  "vehicleImage": null,
+  "password": "hashedpassword",
+  "busNumber": "KL-07-AB-1234",
+  "departureTime": "08:30",
+  "arrivalTime": "16:45",
+  "operatedRoutes": "City Center to Airport via Highway",
+  "registerId": "BUS-1234567890"
+}
