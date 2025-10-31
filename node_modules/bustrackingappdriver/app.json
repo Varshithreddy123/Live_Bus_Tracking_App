@@ -1,11 +1,10 @@
 {
   "expo": {
-    "name": "LivebustrackingDriver",
-    "slug": "LivebustrackingDriver",
+    "name": "LiveBusTrackingDriver",
+    "slug": "livebustrackingdriver",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo/logo.png",
-    "scheme": "LivebustrackingDriver",
+    "scheme": "livebustrackingdriver",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -20,12 +19,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.project.LivebustrackingDriver",
-      "config": {
-        "googleMaps": {
-          "apiKey": ""
-        }
-      }
+      "package": "com.project.livebustrackingdriver"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -41,6 +35,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "appRoot": "app"
+      }
     }
   }
 }

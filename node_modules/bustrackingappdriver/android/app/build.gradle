@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.project.LivebustrackingDriver'
+    namespace 'com.project.livebustrackingdriver'
     defaultConfig {
-        applicationId 'com.project.LivebustrackingDriver'
+        applicationId 'com.project.livebustrackingdriver'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

@@ -45,7 +45,7 @@ export default function OtpverificationScreen() {
       console.log("Sending OTP to:", phoneNumber);
       console.log("API URL:", `${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/send-otp`);
       
-      const response = await api.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/send-otp`, {
+      const response = await api.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/driver/send-otp-driver`, {
         phone_number: phoneNumber,
       });
       console.log("OTP Sent:", response.data);
@@ -94,7 +94,7 @@ export default function OtpverificationScreen() {
       };
       console.log("Verification payload:", payload);
       
-      const response = await api.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/verify-otp`, payload);
+      const response = await api.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/driver/verify-otp-driver`, payload);
       
       console.log("OTP Verification Response:", response.data);
       
@@ -154,7 +154,7 @@ if (response.data && response.data.user) {
     try {
       setLoading(true);
       console.log("Resending OTP to:", phoneNumber);
-      const response = await api.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/resend-otp`, {
+      const response = await api.post(`${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/driver/resend-otp-driver`, {
         phone_number: phoneNumber,
       });
       console.log("OTP Resent:", response.data);

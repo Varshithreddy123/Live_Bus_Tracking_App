@@ -118,7 +118,7 @@ export default function PhoneNumberVerificationScreen() {
       
       // Send OTP request
       const response = await api.post(
-        `${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/send-otp-driver`,
+        `${process.env.EXPO_PUBLIC_SERVER_URI}/api/v1/driver/send-otp-driver`,
         payload
       );
       
@@ -126,11 +126,11 @@ export default function PhoneNumberVerificationScreen() {
       
       // Success - navigate to OTP verification
       if (response.data && response.data.success) {
-        toast.show('OTP sent successfully! Check your phone.', { 
+        toast.show('OTP sent successfully! Check your phone.', {
           placement: "bottom",
-          type: "success" 
+          type: "success"
         });
-        
+
         // Navigate to OTP verification with phone number
         router.push({
           pathname: '/verification/phone-number',
@@ -143,9 +143,9 @@ export default function PhoneNumberVerificationScreen() {
       } else {
         // Handle unexpected response format
         console.error("Unexpected response format:", response.data);
-        toast.show(response.data?.message || 'Failed to send OTP. Please try again.', { 
+        toast.show(response.data?.message || 'Failed to send OTP. Please try again.', {
           placement: "bottom",
-          type: "warning" 
+          type: "warning"
         });
       }
       
@@ -163,6 +163,8 @@ export default function PhoneNumberVerificationScreen() {
           errorMessage = 'Too many requests. Please wait a moment and try again.';
         } else if (error.response.status === 400) {
           errorMessage = error.response.data?.message || 'Invalid phone number format.';
+        } else if (error.response.status === 404) {
+          errorMessage = 'Phone number not registered. Please signup first.';
         } else if (error.response.status >= 500) {
           errorMessage = 'Server error. Please try again later.';
         } else {

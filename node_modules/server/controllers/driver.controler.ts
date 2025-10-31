@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 dotenv.config();
 import { NextFunction, Request, Response } from "express";
 import twilio from "twilio";
+import jwt from 'jsonwebtoken';
+import { AuthRequest } from '../middleware/authDriver.middleware';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID!;
 const authToken = process.env.TWILIO_AUTH_TOKEN!;
@@ -41,13 +43,28 @@ export const registerDriver = async (req: Request, res: Response, next: NextFunc
   }
 
   try {
+    // Check if driver exists
+    const isDriverExist = await prisma.driver.findUnique({
+      where: {
+        phoneNumber: phone_number,
+      }
+    });
+
+    // If driver doesn't exist, return error
+    if (!isDriverExist) {
+      return res.status(404).json({
+        success: false,
+        message: "Phone number not registered. Please signup first."
+      });
+    }
+
     const verification = await client.verify.v2
       .services(serviceSid)
       .verifications.create({ to: phone_number, channel: "sms" });
 
     console.log(`Sent verification to ${phone_number}: ${verification.status}`);
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       success: true,
       message: "Verification code sent successfully",
       data: {
@@ -130,6 +147,13 @@ export const verifyDriverOTP = async (req: Request, res: Response, next: NextFun
         }
       });
 
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: newDriver.id, phoneNumber: newDriver.phoneNumber, role: 'driver' },
+        process.env.JWT_SECRET || 'your-super-secure-jwt-secret-here',
+        { expiresIn: '7d' }
+      );
+
       return res.status(201).json({
         success: true,
         message: "OTP verified and driver account created successfully",
@@ -139,9 +163,17 @@ export const verifyDriverOTP = async (req: Request, res: Response, next: NextFun
           phoneNumber: newDriver.phoneNumber,
           name: newDriver.name,
           status: newDriver.status,
-        }
+        },
+        token: token
       });
     } else {
+      // Generate JWT token for existing driver
+      const token = jwt.sign(
+        { id: isDriverExist.id, phoneNumber: isDriverExist.phoneNumber, role: 'driver' },
+        process.env.JWT_SECRET || 'your-super-secure-jwt-secret-here',
+        { expiresIn: '7d' }
+      );
+
       return res.status(200).json({
         success: true,
         message: "OTP verified successfully",
@@ -155,7 +187,8 @@ export const verifyDriverOTP = async (req: Request, res: Response, next: NextFun
           drinving_license: isDriverExist.drinving_license,
           rating: isDriverExist.rating,
           status: isDriverExist.status,
-        }
+        },
+        token: token
       });
     }
   } catch (err: any) {
@@ -218,9 +251,10 @@ export const resendDriverOTP = async (req: Request, res: Response, next: NextFun
 };
 
 // 👤 Complete Driver Profile (Personal Info)
-export const completeDriverProfile = async (req: Request, res: Response, next: NextFunction) => {
+export const completeDriverProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { driverId, email, name, drinving_license, country } = req.body;
+    const { email, name, drinving_license, country } = req.body;
+    const driverId = req.driver?.id;
 
     // Validate required fields
     if (!driverId) {
@@ -808,6 +842,65 @@ export const getDriverStatistics = async (req: Request, res: Response, next: Nex
     });
   } catch (error: any) {
     console.error("Get Driver Statistics Error:", error);
+    next(error);
+  }
+};
+
+// 👤 Get My Driver Profile (Authenticated)
+export const getMyDriverProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const driverId = req.driver?.id;
+
+    if (!driverId) {
+      return res.status(400).json({
+        success: false,
+        message: "Driver ID is required"
+      });
+    }
+
+    const driver = await prisma.driver.findUnique({
+      where: { id: driverId },
+      include: {
+        rides: {
+          take: 10,
+          orderBy: {
+            createdAt: 'desc'
+          }
+        }
+      }
+    });
+
+    if (!driver) {
+      return res.status(404).json({
+        success: false,
+        message: "Driver not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      driver: {
+        id: driver.id,
+        name: driver.name,
+        email: driver.email,
+        phoneNumber: driver.phoneNumber,
+        country: driver.country,
+        drinving_license: driver.drinving_license,
+        vehicleNumber: driver.vehicleNumber,
+        vehicleType: driver.vehicleType,
+        vehicleColor: driver.vehicleColor,
+        vehicleImage: driver.vehicleImage,
+        rating: driver.rating,
+        totalEarning: driver.totalEarning,
+        totalRides: driver.totalRides,
+        pendingRides: driver.pendingRides,
+        cancleRides: driver.cancleRides,
+        status: driver.status,
+        recentRides: driver.rides,
+      }
+    });
+  } catch (error: any) {
+    console.error("Get My Driver Profile Error:", error);
     next(error);
   }
 };

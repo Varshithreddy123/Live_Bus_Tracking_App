@@ -11,11 +11,20 @@
     "build:user": "cd user && npx expo prebuild --clean",
     "build:driver": "cd driver && npx expo prebuild --clean",
     "build:all": "npm run build:user && npm run build:driver",
-    "start:user": "cd user && npx expo start",
+    "start:user": "cd user && npx expo start --go",
     "start:driver": "cd driver && npx expo start",
     "start:server": "cd server && npm start"
   },
   "devDependencies": {
-    "expo": "~50.0.0"
+    "@types/react": "~19.1.10"
+  },
+  "dependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "overrides": {
+    "react-native-reanimated": "3.10.0",
+    "schema-utils": "3.3.0",
+    "ajv": "6.12.6"
   }
 }

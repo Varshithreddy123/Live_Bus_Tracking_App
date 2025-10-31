@@ -7,8 +7,9 @@
     "icon": "./assets/images/logo/logo.png",
     "scheme": "findabus",
     "userInterfaceStyle": "light",
+    "entryPoint": "expo-router/entry",
     "splash": {
-      "image": "./assets/logo.png",
+      "image": "./assets/images/splash/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -31,7 +32,6 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router",
       [
         "expo-font",
         {
@@ -39,7 +39,8 @@
             "./assets/fonts/TT-Octosquares-Medium.ttf"
           ]
         }
-      ]
+      ],
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true

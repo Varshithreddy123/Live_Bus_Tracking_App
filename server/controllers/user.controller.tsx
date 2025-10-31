@@ -4,6 +4,8 @@ dotenv.config();
 import { NextFunction, Request, Response } from "express";
 import twilio from "twilio";
 import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
+import { AuthRequest } from '../middleware/authUser.middleware';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID!;
 const authToken = process.env.TWILIO_AUTH_TOKEN!;
@@ -72,15 +74,31 @@ export const verifyOTP = async (req: Request, res: Response, next: NextFunction)
         }
       });
 
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: newUser.id, phoneNumber: newUser.phoneNumber, role: 'user' },
+        process.env.JWT_SECRET || 'your-super-secure-jwt-secret-here',
+        { expiresIn: '7d' }
+      );
+
       return res.status(201).json({
         message: "OTP verified and account created successfully",
         user: newUser,
+        token: token,
         isNewUser: true
       });
     } else {
+      // Generate JWT token for existing user
+      const token = jwt.sign(
+        { id: isUserExist.id, phoneNumber: isUserExist.phoneNumber, role: 'user' },
+        process.env.JWT_SECRET || 'your-super-secure-jwt-secret-here',
+        { expiresIn: '7d' }
+      );
+
       return res.status(200).json({
         message: "OTP verified successfully",
         user: isUserExist,
+        token: token,
         isNewUser: false
       });
     }
@@ -116,7 +134,7 @@ export const resendOTP = async (req: Request, res: Response, next: NextFunction)
 };
 
   //signup user
-  export const signupNewUser = async (req: Request, res: Response, next: NextFunction) => {
+  export const signupNewUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const {userId, email, name} = req.body;
 
